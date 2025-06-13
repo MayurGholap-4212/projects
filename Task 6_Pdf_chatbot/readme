@@ -1,0 +1,558 @@
+# 🤖 RAG PDF Chatbot
+
+A powerful Retrieval-Augmented Generation (RAG) chatbot that can answer questions based on uploaded PDF documents. Built with open-source LLMs and optimized for Google Colab.
+
+## 📋 Table of Contents
+
+- [Features](#-features)
+- [Architecture](#-architecture)
+- [Requirements](#-requirements)
+- [Installation](#-installation)
+- [Quick Start](#-quick-start)
+- [Usage](#-usage)
+- [Configuration](#-configuration)
+- [Troubleshooting](#-troubleshooting)
+- [Advanced Usage](#-advanced-usage)
+- [Performance Optimization](#-performance-optimization)
+- [API Reference](#-api-reference)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+## ✨ Features
+
+- **📄 PDF Processing**: Extract and process text from PDF documents
+- **🔍 Vector Search**: ChromaDB-powered similarity search for relevant content retrieval
+- **🧠 Open-Source LLMs**: Support for various open-source language models
+- **💬 Interactive Chat**: Web-based chat interface using Gradio
+- **⚡ RAG Pipeline**: Retrieval-Augmented Generation for accurate responses
+- **🛡️ Anti-Repetition**: Advanced response cleaning to prevent repetitive outputs
+- **🎯 Context-Aware**: Maintains conversation context and document understanding
+- **🔧 Configurable**: Easy model swapping and parameter tuning
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   PDF Upload    │───▶│  Text Extraction │───▶│  Text Chunking  │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                                        │
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│  User Query     │    │  Similarity      │◀───│  Vector Store   │
+└─────────────────┘    │  Search          │    │  (ChromaDB)     │
+         │              └──────────────────┘    └─────────────────┘
+         │                       │
+         ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐
+│  LLM Response   │◀───│  Context +       │
+│  Generation     │    │  Query Prompt    │
+└─────────────────┘    └──────────────────┘
+```
+
+## 📦 Requirements
+
+### System Requirements
+- **Python**: 3.8 or higher
+- **RAM**: Minimum 4GB (8GB+ recommended)
+- **Storage**: 2GB+ free space for models
+- **GPU**: Optional but recommended (CUDA-compatible)
+
+### Dependencies
+```
+torch>=1.9.0
+transformers>=4.20.0
+sentence-transformers>=2.2.0
+chromadb>=0.4.0
+PyPDF2>=3.0.0
+gradio>=3.40.0
+bitsandbytes>=0.41.0
+accelerate>=0.20.0
+langchain>=0.0.200
+```
+
+## 🚀 Installation
+
+### Option 1: Google Colab (Recommended)
+
+1. **Open Google Colab**: Go to [colab.research.google.com](https://colab.research.google.com)
+
+2. **Create New Notebook**: Click "New notebook"
+
+3. **Copy the Code**: Copy the entire code from the provided Python file
+
+4. **Run the Installation**: The code automatically installs all dependencies
+
+5. **Wait for Setup**: First run takes 5-10 minutes to download models
+
+### Option 2: Local Installation
+
+```bash
+# Clone or download the repository
+git clone <repository-url>
+cd rag-pdf-chatbot
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install torch transformers sentence-transformers
+pip install chromadb PyPDF2 gradio bitsandbytes
+pip install accelerate langchain langchain-community
+
+# Run the application
+python rag_chatbot.py
+```
+
+### Option 3: Docker (Advanced)
+
+```dockerfile
+FROM python:3.9-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+EXPOSE 7860
+
+CMD ["python", "rag_chatbot.py"]
+```
+
+## 🎯 Quick Start
+
+### 1. Launch the Application
+
+**Google Colab:**
+```python
+# Run all cells in the notebook
+# The interface will launch automatically with a public URL
+```
+
+**Local:**
+```bash
+python rag_chatbot.py
+```
+
+### 2. Upload a PDF Document
+
+1. Click the "📄 Upload PDF Document" button
+2. Select your PDF file
+3. Wait for "✅ PDF processed successfully!" message
+
+### 3. Start Chatting
+
+```
+You: What is this document about?
+Bot: This document appears to be about [summary based on content]...
+
+You: What are the main topics covered?
+Bot: Based on the document, the main topics include: [relevant topics]...
+```
+
+## 📖 Usage
+
+### Basic Usage
+
+1. **Upload PDF**: Use the file uploader to add your document
+2. **Ask Questions**: Type questions about the document content
+3. **Get Answers**: The bot retrieves relevant information and generates responses
+
+### Example Questions
+
+**General Questions:**
+- "What is this document about?"
+- "Summarize the main points"
+- "What are the key findings?"
+
+**Specific Questions:**
+- "What does it say about [specific topic]?"
+- "Find information about [keyword]"
+- "What are the recommendations?"
+
+**Analytical Questions:**
+- "Compare [concept A] and [concept B]"
+- "What are the advantages of [topic]?"
+- "Explain [technical term] from the document"
+
+### Command Line Interface
+
+```python
+# Enable CLI mode by uncommenting the last line
+run_cli_version()
+```
+
+```bash
+# Example CLI interaction
+Enter the path to your PDF file: ./document.pdf
+✅ PDF processed successfully! Added 45 chunks to vector database
+
+💬 You can now ask questions about your PDF. Type 'quit' to exit.
+
+You: What is the main topic?
+Bot: The main topic of this document is...
+
+You: quit
+Goodbye! 👋
+```
+
+## ⚙️ Configuration
+
+### Model Configuration
+
+```python
+# Change the language model
+chatbot = RAGChatbot()
+chatbot.llm_handler = LLMHandler("microsoft/DialoGPT-medium")
+
+# For better performance (requires more GPU memory)
+chatbot.llm_handler = LLMHandler("meta-llama/Llama-2-7b-chat-hf")
+```
+
+### Vector Database Settings
+
+```python
+# Customize embedding model
+vector_db = VectorDatabase("all-mpnet-base-v2")  # Better but slower
+vector_db = VectorDatabase("all-MiniLM-L6-v2")   # Faster but smaller
+
+# Adjust similarity search
+relevant_docs = vector_db.similarity_search(query, n_results=5)
+```
+
+### Text Processing Parameters
+
+```python
+# Adjust chunk size and overlap
+pdf_processor = PDFProcessor()
+chunks = pdf_processor.chunk_text(text, chunk_size=1500, overlap=300)
+```
+
+### Response Generation Settings
+
+```python
+# Customize generation parameters
+response = llm_handler.generate_response(
+    context=context,
+    query=query,
+    max_length=300,           # Maximum response length
+    temperature=0.3,          # Lower = more focused
+    repetition_penalty=1.2    # Prevent repetition
+)
+```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### 1. Model Loading Errors
+```
+Error: Could not load model microsoft/DialoGPT-medium
+```
+**Solution:**
+- The code automatically falls back to `distilgpt2`
+- For Colab, ensure you have sufficient RAM
+- Try restarting the runtime
+
+#### 2. PDF Processing Failures
+```
+Error reading PDF: [various errors]
+```
+**Solutions:**
+- Ensure PDF is not password-protected
+- Try a different PDF file
+- Check file size (keep under 50MB for Colab)
+
+#### 3. Repetitive Responses
+```
+Bot: Answer: What is the file? Answer: What is the file?...
+```
+**Solution:**
+- This is fixed in the updated version
+- The code includes anti-repetition mechanisms
+- Try rephrasing your question
+
+#### 4. Memory Issues
+```
+CUDA out of memory
+```
+**Solutions:**
+- Use smaller models: `distilgpt2` instead of larger models
+- Reduce batch size
+- Restart Colab runtime
+
+#### 5. ChromaDB Errors
+```
+Collection already exists
+```
+**Solution:**
+```python
+# Reset the database
+chatbot.vector_db.client.reset()
+```
+
+### Performance Issues
+
+#### Slow Response Times
+1. **Reduce chunk size**: Smaller chunks = faster search
+2. **Use smaller models**: `distilgpt2` vs `DialoGPT-medium`
+3. **Limit similarity results**: `n_results=2` instead of 5
+
+#### Poor Answer Quality
+1. **Increase chunk overlap**: Better context preservation
+2. **Use better embedding models**: `all-mpnet-base-v2`
+3. **Improve PDF quality**: Clean, well-formatted documents work better
+
+## 🚀 Advanced Usage
+
+### Custom Model Integration
+
+```python
+# Add a custom model
+class CustomLLMHandler(LLMHandler):
+    def __init__(self):
+        super().__init__("your-custom-model")
+    
+    def generate_response(self, context, query, **kwargs):
+        # Custom generation logic
+        return super().generate_response(context, query, **kwargs)
+
+# Use custom handler
+chatbot.llm_handler = CustomLLMHandler()
+```
+
+### Multi-PDF Support
+
+```python
+# Process multiple PDFs
+pdf_files = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
+for pdf_file in pdf_files:
+    chatbot.upload_pdf(type('', (), {'name': pdf_file})())
+```
+
+### Conversation Memory
+
+```python
+# Add conversation context
+class EnhancedRAGChatbot(RAGChatbot):
+    def __init__(self):
+        super().__init__()
+        self.conversation_memory = []
+    
+    def chat_with_memory(self, message, history):
+        # Include previous conversation in context
+        recent_context = " ".join([h[1] for h in history[-3:]])
+        # Enhanced chat logic here
+        pass
+```
+
+### API Integration
+
+```python
+# Create a simple API endpoint
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+chatbot = RAGChatbot()
+
+@app.route('/chat', methods=['POST'])
+def chat_api():
+    data = request.json
+    message = data.get('message')
+    history = data.get('history', [])
+    
+    _, updated_history = chatbot.chat(message, history)
+    return jsonify({'response': updated_history[-1][1]})
+
+@app.route('/upload', methods=['POST'])
+def upload_pdf():
+    file = request.files['pdf']
+    # Process file upload
+    return jsonify({'status': 'success'})
+```
+
+## ⚡ Performance Optimization
+
+### For Google Colab
+
+```python
+# Enable GPU acceleration
+import torch
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f"Using device: {device}")
+
+# Optimize memory usage
+torch.cuda.empty_cache()  # Clear GPU cache
+
+# Use mixed precision
+from torch.cuda.amp import autocast
+with autocast():
+    # Model operations here
+    pass
+```
+
+### Memory Management
+
+```python
+# Efficient batch processing
+def process_large_pdf(pdf_path, batch_size=10):
+    chunks = pdf_processor.process_pdf(pdf_path)
+    
+    for i in range(0, len(chunks), batch_size):
+        batch = chunks[i:i+batch_size]
+        vector_db.add_documents(batch)
+        torch.cuda.empty_cache()  # Clear memory
+```
+
+### Production Deployment
+
+```python
+# Use production-ready settings
+import os
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
+
+# Enable model quantization
+quantization_config = BitsAndBytesConfig(
+    load_in_8bit=True,
+    llm_int8_enable_fp32_cpu_offload=True
+)
+```
+
+## 📚 API Reference
+
+### RAGChatbot Class
+
+```python
+class RAGChatbot:
+    def __init__(self):
+        """Initialize the RAG chatbot with all components"""
+        
+    def upload_pdf(self, pdf_file) -> str:
+        """Process and upload a PDF file
+        
+        Args:
+            pdf_file: File object with .name attribute
+            
+        Returns:
+            str: Status message
+        """
+        
+    def chat(self, message: str, history: List[Tuple[str, str]]) -> Tuple[str, List[Tuple[str, str]]]:
+        """Handle chat interaction
+        
+        Args:
+            message: User input message
+            history: Conversation history
+            
+        Returns:
+            Tuple: (empty_string, updated_history)
+        """
+```
+
+### PDFProcessor Class
+
+```python
+class PDFProcessor:
+    def extract_text_from_pdf(self, pdf_path: str) -> str:
+        """Extract text from PDF file"""
+        
+    def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
+        """Split text into overlapping chunks"""
+        
+    def process_pdf(self, pdf_path: str) -> List[str]:
+        """Process PDF and return text chunks"""
+```
+
+### VectorDatabase Class
+
+```python
+class VectorDatabase:
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+        """Initialize vector database with embedding model"""
+        
+    def add_documents(self, chunks: List[str]) -> str:
+        """Add document chunks to vector database"""
+        
+    def similarity_search(self, query: str, n_results: int = 3) -> List[str]:
+        """Search for similar documents"""
+```
+
+### LLMHandler Class
+
+```python
+class LLMHandler:
+    def __init__(self, model_name: str = "microsoft/DialoGPT-small"):
+        """Initialize language model handler"""
+        
+    def generate_response(self, context: str, query: str, max_length: int = 200) -> str:
+        """Generate response using context and query"""
+        
+    def clean_response(self, response: str) -> str:
+        """Clean and format the response"""
+```
+
+## 🔄 Version History
+
+### v1.2.0 (Current)
+- ✅ Fixed repetitive response issue
+- ✅ Added anti-repetition mechanisms
+- ✅ Improved prompt engineering
+- ✅ Better error handling
+- ✅ Enhanced model fallback system
+
+### v1.1.0
+- ✅ Added Gradio web interface
+- ✅ Implemented ChromaDB vector storage
+- ✅ Added PDF processing capabilities
+- ✅ Basic RAG pipeline implementation
+
+### v1.0.0
+- ✅ Initial release
+- ✅ Basic chatbot functionality
+- ✅ Simple text processing
+
+## 🤝 Contributing
+
+### Development Setup
+
+```bash
+# Fork the repository
+git clone https://github.com/yourusername/rag-pdf-chatbot.git
+cd rag-pdf-chatbot
+
+# Create development environment
+python -m venv dev-env
+source dev-env/bin/activate
+
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+python -m pytest tests/
+```
+
+### Contribution Guidelines
+
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature-name`
+3. **Commit** your changes: `git commit -am 'Add feature'`
+4. **Push** to the branch: `git push origin feature-name`
+5. **Submit** a pull request
+
+### Code Style
+
+- Follow PEP 8 guidelines
+- Use type hints where possible
+- Add docstrings for all functions
+- Write unit tests for new features
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Hugging Face** for transformers and model hosting
+- **ChromaDB** for vector database capabilities
+- **Gradio** for the web interface
+- **Google Colab** for free GPU access
+- **Open source community** for the foundational models
